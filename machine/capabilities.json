@@ -1,0 +1,12 @@
+{
+  "schema": "glaciereq.repo-capabilities.v1",
+  "repository": "GlacierEQ/adobe-creative-provenance-gate",
+  "capabilities": [
+    {
+      "id": "creative-provenance-gate",
+      "name": "Creative Provenance Gate",
+      "status": "SCAFFOLD",
+      "module": "src/creative_provenance_gate.py"
+    }
+  ]
+}

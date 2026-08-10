@@ -1,0 +1,31 @@
+{
+  "schema": "glaciereq.proof-receipt.v1",
+  "repository": "GlacierEQ/adobe-creative-provenance-gate",
+  "source_sha": "6402788371fa56e314de49bd60447f318d15f601e17f3fa849d4d35672093595",
+  "proof_id": "elite-adobe-creative-provenance-gate-1786356639",
+  "environment": {
+    "python": "/Users/kcbflux/.local/bin/python3.11",
+    "PYTHONPATH": "/Users/kcbflux/GlacierEQ_Swarm/job-app/repos/adobe-creative-provenance-gate:/Users/kcbflux/GlacierEQ_Swarm/job-app/repos/adobe-creative-provenance-gate/src",
+    "entry": "unittest"
+  },
+  "tests": [
+    "/Users/kcbflux/.local/bin/python3.11 -m unittest discover -s tests -v (x2)"
+  ],
+  "adversarial_tests": [
+    "tests/test_adversarial.py"
+  ],
+  "runtime": {
+    "operate": "scripts/operate.py (x2)",
+    "dual_run_ok": true,
+    "proof_dual_run_ok": true
+  },
+  "result": "PASS",
+  "limitations": [
+    "not production deployed",
+    "reference implementation only"
+  ],
+  "timestamp": "2026-08-10T10:10Z",
+  "artifact_hashes": {
+    "operability_receipt": "8b0b90f37dfd6ffec81348941527a894e39e0d074b4592c19af7b3baa88fbffb"
+  }
+}
