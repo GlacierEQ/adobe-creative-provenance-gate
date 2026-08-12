@@ -1,9 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "adobe-creative-provenance-gate"
-version = "0.1.0"
+version = "1.0.0"
 description = "Deterministic content-addressed creative provenance and lineage verifier"
 requires-python = ">=3.11"
 dependencies = []
+
+[project.scripts]
+creative-provenance = "creative_provenance_cli:main"
+
+[tool.setuptools]
+py-modules = ["creative_provenance_gate", "creative_provenance_cli"]
+package-dir = {"" = "src"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
