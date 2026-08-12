@@ -202,7 +202,8 @@ class CreativeProvenanceGate:
         if output["editable"] and any(not t["preserves_editability"] for t in transforms):
             reasons.append("editable_output_has_destructive_transform")
 
-        source_root = _digest(sorted(sources, key=lambda item: item["id"])) if sources else _digest([])
+        ordered_sources = sorted(sources, key=lambda item: item["id"])
+        source_root = _digest(ordered_sources) if ordered_sources else _digest([])
         chain: list[str] = [source_root]
         previous = source_root
         for step in transforms:
@@ -213,7 +214,7 @@ class CreativeProvenanceGate:
             "schema": "glaciereq.creative-provenance.v1",
             "subject_id": str(req.subject_id),
             "grant_id": req.grant_id,
-            "sources": sources,
+            "sources": ordered_sources,
             "transforms": transforms,
             "output": output,
             "source_root": source_root,
@@ -225,10 +226,10 @@ class CreativeProvenanceGate:
         if not reasons:
             reasons = ["provenance_bound"]
         metrics = {
-            "source_count": len(sources),
+            "source_count": len(ordered_sources),
             "transform_count": len(transforms),
             "chain_depth": len(chain),
-            "rights_verified": bool(sources) and all(s["rights"] in _ALLOWED_RIGHTS for s in sources),
+            "rights_verified": bool(ordered_sources) and all(s["rights"] in _ALLOWED_RIGHTS for s in ordered_sources),
             "editable_transform_ratio": (
                 sum(1 for t in transforms if t["preserves_editability"]) / len(transforms)
                 if transforms else 1.0
