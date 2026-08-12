@@ -2,14 +2,56 @@ name: tests
 on:
   push:
   pull_request:
+
 jobs:
-  pytest:
+  behavior:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt
+      - run: python -m pip install -e . pytest
       - run: python -m pytest -q
-      - run: python scripts/operate.py
+      - name: run concrete lineage demo
+        run: python scripts/operate.py
+      - name: exercise packaged provenance CLI
+        run: |
+          python - <<'PY'
+          import json
+          from creative_provenance_gate import CreativeProvenanceGate
+
+          gate = CreativeProvenanceGate()
+          source = gate.source_claim("ci-source", b"source-v1")
+          output = b"source-v1:export"
+          transform = gate.transform_claim(
+              "export",
+              [source],
+              output,
+              tool_id="exporter/1",
+              cost=0.1,
+          )
+          request = {
+              "subject_id": "ci-provenance",
+              "budget": 1.0,
+              "sources": [{
+                  "asset_id": source.asset_id,
+                  "sha256": source.sha256,
+                  "rights": "owned",
+                  "allow_derivatives": True,
+                  "editable": True,
+              }],
+              "transforms": [{
+                  "operation": transform.operation,
+                  "input_sha256": list(transform.input_sha256),
+                  "output_sha256": transform.output_sha256,
+                  "tool_id": transform.tool_id,
+                  "cost": transform.cost,
+                  "preserves_editability": True,
+              }],
+              "output_sha256": gate.content_digest(output),
+          }
+          with open("/tmp/provenance-request.json", "w", encoding="utf-8") as handle:
+              json.dump(request, handle)
+          PY
+          creative-provenance --input /tmp/provenance-request.json
