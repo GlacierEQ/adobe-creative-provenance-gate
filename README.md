@@ -1,51 +1,103 @@
 # Creative Provenance Gate
 
-Independent GlacierEQ portfolio exhibit aligned to **Adobe** operating themes.
+Independent GlacierEQ portfolio exhibit aligned to Adobe creative-systems operating themes.
 
-> **Not affiliated.** This repository is not affiliated with, endorsed by, employed by, or deployed at Adobe.
-> No proprietary access, production deployment, customer impact, or company partnership is claimed.
+> **Not affiliated.** This repository is not affiliated with, endorsed by, employed by, or deployed at Adobe. It uses no proprietary Adobe systems or data.
 
-## Bottleneck (GlacierEQ hypothesis)
+## What it does
 
-Orchestrating workflows across creative applications and models while retaining editable structure, provenance, and brand control.
+This repository implements a **deterministic content-addressed provenance engine** for creative exports.
 
-**Brick wall:** Scaling automation without flattening human judgment, losing asset lineage, or creating unauthorized transformations.
+A creative export can be evaluated against:
 
-**Observed public pressure (snapshot hypothesis):** Creative work is becoming agentic across ideation, generation, editing, collaboration, and production tools.
+- source asset SHA-256 identities
+- source rights state and derivative permissions
+- ordered transformation lineage
+- transformation tool and model identity
+- transformation cost versus a declared budget
+- editable-structure preservation
+- terminal-output membership in the lineage graph
+- basic brand metadata/tag rules
+- authority expiry
+- tamper-evident receipt verification
 
-## Innovation mechanism
+The engine refuses exports when lineage is broken, rights are unknown/restricted, derivatives are prohibited, a generative step omits model identity, costs exceed budget, editability is lost when required, brand constraints drift, the authority window expires, or the declared output is not the terminal lineage product.
 
-**Creative Provenance Gate** — Bind each creative export to a content-addressed provenance receipt (source mix, model id, rights claim, transform chain) and refuse silent mutation.
+## Run it
 
-## Target roles
+```bash
+python -m pytest -q
+python scripts/operate.py
+```
 
-- Applied AI Systems Architect
-- Forward-Deployed Engineer
-- AI Infrastructure / Governance Engineer
+`operate.py` constructs two content-addressed source assets, composes them into an editable output, verifies rights and brand constraints, emits a lineage graph and provenance digest, then independently re-verifies the receipt before returning success.
 
-## Application move
+## Core API
 
-Build a recruiter-package creative pipeline with editable artifacts and provenance.
+```python
+from creative_provenance_gate import (
+    CreativeProvenanceGate,
+    CreativeProvenanceGateRequest,
+    RightsStatus,
+)
 
-## Current scaffold state
+gate = CreativeProvenanceGate(clock=lambda: 1000.0)
 
-This leaf is a **scaffold**: contracts, tests, and a stub mechanism exist so another engineer/AI can fill production-grade code without inventing company affiliation.
+logo = gate.source_claim(
+    "brand-logo",
+    b"vector-logo:v3",
+    rights=RightsStatus.OWNED,
+)
+
+output = b"composite-output"
+step = gate.transform_claim(
+    "compose",
+    [logo],
+    output,
+    tool_id="layer-compositor/1.0",
+    cost=0.2,
+)
+
+request = CreativeProvenanceGateRequest(
+    subject_id="hero-v1",
+    budget=1.0,
+    now=1000.0,
+    sources=(logo,),
+    transforms=(step,),
+    output_sha256=gate.content_digest(output),
+)
+
+receipt = gate.evaluate(request)
+```
+
+## Mechanism boundary
+
+This project verifies **declared creative provenance and lineage**. It does not render images, call proprietary creative APIs, inspect external licenses, or claim production deployment. Rights claims are inputs that the engine validates for internal consistency; external legal validity still depends on the underlying license evidence.
+
+## Why it exists
+
+The design addresses a recurring systems problem: automation can generate and transform creative assets faster than teams can preserve source identity, transformation history, editability, and authorization. The repository turns that concern into an executable mechanism rather than a policy document.
+
+## Repository surfaces
 
 | Surface | Path |
-|---------|------|
-| Mechanism stub | `src/creative_provenance_gate.py` |
-| Operate entry | `scripts/operate.py` |
-| Contract tests | `tests/` |
-| Target contract | `machine/target-contract.json` |
-| **AI fill-in brief** | **`DEV_UP_INSTRUCTIONS.md`** |
-| Issue contract | `ISSUE_CONTRACT.md` |
+|---|---|
+| Provenance engine | `src/creative_provenance_gate.py` |
+| Executable demonstration | `scripts/operate.py` |
+| Behavioral tests | `tests/test_creative_provenance_gate.py` |
+| Adversarial tests | `tests/test_adversarial.py` |
+| CI | `.github/workflows/tests.yml` |
 
-## Non-claims
+## Verification contract
 
-- No Adobe employment, endorsement, proprietary data, or production use
-- No customer, revenue, latency, or scale claims without separate receipts
-- Scaffold tests define **intended behavior**, not verified production excellence
+A successful receipt includes:
 
-## Next gate
+- `decision = ALLOW`
+- a deterministic receipt `digest`
+- a content-addressed `provenance_digest`
+- source/transform counts
+- verified terminal output
+- cost and editability metrics
+- an inspectable lineage graph
 
-Generate one controlled multi-format package and validate every source and transformation.
+`verify_receipt(request, receipt)` re-evaluates the request and rejects altered receipt content or digests.
