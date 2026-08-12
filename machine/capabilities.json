@@ -1,12 +1,51 @@
 {
-  "schema": "glaciereq.repo-capabilities.v1",
+  "schema": "glaciereq.repo-capabilities.v2",
   "repository": "GlacierEQ/adobe-creative-provenance-gate",
+  "status": "FUNCTIONAL",
   "capabilities": [
     {
-      "id": "creative-provenance-gate",
-      "name": "Creative Provenance Gate",
-      "status": "SCAFFOLD",
-      "module": "src/creative_provenance_gate.py"
+      "id": "content-addressed-lineage",
+      "status": "IMPLEMENTED",
+      "module": "src/creative_provenance_gate.py",
+      "behaviors": [
+        "sha256_source_identity",
+        "ordered_transform_lineage",
+        "terminal_output_verification",
+        "lineage_digest"
+      ]
+    },
+    {
+      "id": "creative-rights-validation",
+      "status": "IMPLEMENTED",
+      "module": "src/creative_provenance_gate.py",
+      "behaviors": [
+        "rights_state_validation",
+        "derivative_permission",
+        "generative_model_identity",
+        "editability_preservation",
+        "budget_enforcement",
+        "brand_rule_validation",
+        "authority_expiry"
+      ]
+    },
+    {
+      "id": "tamper-evident-receipts",
+      "status": "IMPLEMENTED",
+      "module": "src/creative_provenance_gate.py",
+      "behaviors": ["receipt_digest", "receipt_reverification", "lineage_graph"]
+    },
+    {
+      "id": "provenance-cli",
+      "status": "IMPLEMENTED",
+      "entrypoint": "creative-provenance",
+      "behaviors": ["json_file_input", "stdin_input", "receipt_persistence", "process_exit_status"]
     }
+  ],
+  "proof_surfaces": [
+    "tests/test_creative_provenance_gate.py",
+    "tests/test_adversarial.py",
+    "tests/test_cli.py",
+    "scripts/operate.py",
+    ".github/workflows/tests.yml"
   ]
 }
