@@ -1,12 +1,12 @@
 # Creative Provenance Gate
 
-Independent GlacierEQ portfolio exhibit aligned to Adobe creative-systems operating themes.
+A deterministic, content-addressed provenance and lineage verifier for creative assets and exports.
 
-> **Not affiliated.** This repository is not affiliated with, endorsed by, employed by, or deployed at Adobe. It uses no proprietary Adobe systems or data.
+> **Independent portfolio project.** This repository is not affiliated with, endorsed by, employed by, or deployed at Adobe. It uses no proprietary Adobe systems or data.
 
-## What it does
+## Purpose
 
-This repository implements a **deterministic content-addressed provenance engine** for creative exports.
+Creative automation can generate and transform assets faster than teams can preserve source identity, transformation history, editability, rights boundaries, cost, and authorization. This repository turns those requirements into executable software.
 
 A creative export can be evaluated against:
 
@@ -17,22 +17,75 @@ A creative export can be evaluated against:
 - transformation cost versus a declared budget
 - editable-structure preservation
 - terminal-output membership in the lineage graph
-- basic brand metadata/tag rules
+- brand metadata/tag rules
 - authority expiry
 - tamper-evident receipt verification
 
-The engine refuses exports when lineage is broken, rights are unknown/restricted, derivatives are prohibited, a generative step omits model identity, costs exceed budget, editability is lost when required, brand constraints drift, the authority window expires, or the declared output is not the terminal lineage product.
+The engine refuses an export when its declared provenance does not survive those checks.
 
-## Run it
+## Install
 
 ```bash
-python -m pytest -q
-python scripts/operate.py
+python -m pip install -e .
 ```
 
-`operate.py` constructs two content-addressed source assets, composes them into an editable output, verifies rights and brand constraints, emits a lineage graph and provenance digest, then independently re-verifies the receipt before returning success.
+The package exposes:
 
-## Core API
+```bash
+creative-provenance
+```
+
+## Verify a provenance request
+
+`creative-provenance` accepts JSON from a file or stdin. A request contains already-computed content identities and declared transformations; the engine verifies their internal lineage contract rather than pretending to inspect an external license registry.
+
+```json
+{
+  "subject_id": "campaign-hero-v1",
+  "budget": 1.0,
+  "sources": [
+    {
+      "asset_id": "brand-logo",
+      "sha256": "<64-hex-source-digest>",
+      "rights": "owned",
+      "allow_derivatives": true,
+      "editable": true,
+      "metadata": {"format": "svg"}
+    }
+  ],
+  "transforms": [
+    {
+      "operation": "resize",
+      "input_sha256": ["<64-hex-source-digest>"],
+      "output_sha256": "<64-hex-output-digest>",
+      "tool_id": "resizer/1",
+      "cost": 0.1,
+      "preserves_editability": true
+    }
+  ],
+  "output_sha256": "<64-hex-output-digest>",
+  "requires_editable": true
+}
+```
+
+Run it:
+
+```bash
+creative-provenance --input request.json --pretty
+```
+
+Persist the receipt as well:
+
+```bash
+creative-provenance \
+  --input request.json \
+  --output receipt.json \
+  --pretty
+```
+
+The command independently re-verifies the receipt before returning success. A refused provenance request, malformed request, or failed receipt verification exits non-zero.
+
+## Python API
 
 ```python
 from creative_provenance_gate import (
@@ -68,36 +121,64 @@ request = CreativeProvenanceGateRequest(
 )
 
 receipt = gate.evaluate(request)
+verified, reason = gate.verify_receipt(request, receipt)
 ```
+
+## Concrete demonstration
+
+The repository retains a real executable demonstration because it exercises the domain mechanism rather than reflecting over class names:
+
+```bash
+python scripts/operate.py
+```
+
+It constructs two content-addressed source assets, composes them into an editable output, verifies rights and brand constraints, emits a lineage graph and provenance digest, and re-verifies the receipt.
+
+## Failure behavior
+
+The engine refuses when it detects material provenance problems including:
+
+- unknown or restricted source rights
+- prohibited derivatives
+- malformed source/input/output digests
+- unknown lineage inputs
+- a non-noop transform claiming an unchanged digest
+- generative operations without model identity
+- negative or excessive transform cost
+- budget overrun
+- lost editability when editability is required
+- brand-rule mismatch
+- unauthorized affiliation claims
+- expired authority
+- output outside the lineage graph
+- output that is not the terminal transform
+- altered receipt content or digest
 
 ## Mechanism boundary
 
-This project verifies **declared creative provenance and lineage**. It does not render images, call proprietary creative APIs, inspect external licenses, or claim production deployment. Rights claims are inputs that the engine validates for internal consistency; external legal validity still depends on the underlying license evidence.
+This project verifies **declared creative provenance and lineage**. It does not render images, call proprietary creative APIs, inspect external licenses, or claim production deployment. Rights claims are inputs whose internal consistency is checked; external legal validity still depends on the underlying license evidence.
 
-## Why it exists
+## Verification
 
-The design addresses a recurring systems problem: automation can generate and transform creative assets faster than teams can preserve source identity, transformation history, editability, and authorization. The repository turns that concern into an executable mechanism rather than a policy document.
+```bash
+python -m pytest -q
+python scripts/operate.py
+```
 
-## Repository surfaces
+CI additionally installs the package and executes `creative-provenance` against a real content-addressed request.
 
-| Surface | Path |
-|---|---|
-| Provenance engine | `src/creative_provenance_gate.py` |
-| Executable demonstration | `scripts/operate.py` |
-| Behavioral tests | `tests/test_creative_provenance_gate.py` |
-| Adversarial tests | `tests/test_adversarial.py` |
-| CI | `.github/workflows/tests.yml` |
+Behavioral proof surfaces:
 
-## Verification contract
+- `tests/test_creative_provenance_gate.py`
+- `tests/test_adversarial.py`
+- `tests/test_cli.py`
+- `scripts/operate.py`
+- `.github/workflows/tests.yml`
 
-A successful receipt includes:
+A successful receipt includes a deterministic receipt digest, content-addressed provenance digest, lineage graph, source/transform counts, cost and editability metrics, and terminal output identity.
 
-- `decision = ALLOW`
-- a deterministic receipt `digest`
-- a content-addressed `provenance_digest`
-- source/transform counts
-- verified terminal output
-- cost and editability metrics
-- an inspectable lineage graph
+## Status
 
-`verify_receipt(request, receipt)` re-evaluates the request and rejects altered receipt content or digests.
+**FUNCTIONAL** as a standalone creative provenance verifier and CLI.
+
+It should not be described as externally license-aware or Adobe-integrated unless those integrations are actually implemented and exercised. The active repository no longer carries promotion/excellence machinery as a substitute for those missing external capabilities.
